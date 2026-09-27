@@ -84,13 +84,21 @@ app.get("/render/:id/result", (req, res) => {
 
 const PORT = Number(process.env.PORT) || 3001;
 
+console.log("remo-clone render service booting...");
+
+// Listening immediately (rather than waiting on warmUp()) matters because
+// platforms like Railway proxy traffic to whatever's on this port right
+// away and expect it to open fast — if bundling the Remotion project were
+// slow on a constrained instance, every request would 502 with zero logs
+// until it finished, indistinguishable from a hung process.
+app.listen(PORT, () => {
+	console.log(`remo-clone render service listening on port ${PORT}`);
+});
+
 warmUp()
 	.then(() => {
-		app.listen(PORT, () => {
-			console.log(`remo-clone render service listening on port ${PORT}`);
-		});
+		console.log("Remotion bundle warmed up");
 	})
 	.catch((error) => {
 		console.error("Failed to warm up Remotion bundle:", error);
-		process.exit(1);
 	});
