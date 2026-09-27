@@ -3,63 +3,37 @@
 // editor use to describe a motion graphic — templates are pure functions of
 // these props, never generated one-off code, so a spec can always be
 // re-rendered deterministically and edited as structured data.
+//
+// Types here are derived from the Zod schemas in `schema.ts` (via z.infer)
+// rather than hand-duplicated, so validation and typing can never drift.
 
-export type TemplateName =
-	| "textReveal"
-	| "iconCallout"
-	| "chartAnimation"
-	| "beforeAfterSplit";
+import type { z } from "zod";
+import type {
+	beforeAfterSplitPropsSchema,
+	chartAnimationPropsSchema,
+	chartDataPointSchema,
+	iconCalloutPropsSchema,
+	iconNameSchema,
+	motionGraphicSpecSchema,
+	sceneSchema,
+	textRevealPropsSchema,
+} from "./schema";
 
-export interface TextRevealProps {
-	text: string;
-	subtext?: string;
-	color?: string;
-	backgroundColor?: string;
-	/** Total scene length; defaults to a sensible value per template if omitted. */
-	durationInFrames?: number;
-}
+export const TEMPLATE_NAMES = [
+	"textReveal",
+	"iconCallout",
+	"chartAnimation",
+	"beforeAfterSplit",
+] as const;
 
-export type IconName =
-	| "check"
-	| "star"
-	| "warning"
-	| "arrowRight"
-	| "heart"
-	| "bolt"
-	| "info";
+export type TemplateName = (typeof TEMPLATE_NAMES)[number];
 
-export interface IconCalloutProps {
-	icon: IconName;
-	text: string;
-	subtext?: string;
-	color?: string;
-	backgroundColor?: string;
-	durationInFrames?: number;
-}
-
-export interface ChartDataPoint {
-	label: string;
-	value: number;
-}
-
-export interface ChartAnimationProps {
-	title?: string;
-	data: ChartDataPoint[];
-	color?: string;
-	backgroundColor?: string;
-	/** Appended after each animated value, e.g. "%" or "k". */
-	unit?: string;
-	durationInFrames?: number;
-}
-
-export interface BeforeAfterSplitProps {
-	beforeLabel: string;
-	afterLabel: string;
-	beforeColor?: string;
-	afterColor?: string;
-	textColor?: string;
-	durationInFrames?: number;
-}
+export type IconName = z.infer<typeof iconNameSchema>;
+export type TextRevealProps = z.infer<typeof textRevealPropsSchema>;
+export type IconCalloutProps = z.infer<typeof iconCalloutPropsSchema>;
+export type ChartDataPoint = z.infer<typeof chartDataPointSchema>;
+export type ChartAnimationProps = z.infer<typeof chartAnimationPropsSchema>;
+export type BeforeAfterSplitProps = z.infer<typeof beforeAfterSplitPropsSchema>;
 
 export interface TemplatePropsMap {
 	textReveal: TextRevealProps;
@@ -68,18 +42,10 @@ export interface TemplatePropsMap {
 	beforeAfterSplit: BeforeAfterSplitProps;
 }
 
-/** One scene in a multi-scene spec (Phase 2). Kept here since templates define the shape. */
-export interface Scene<T extends TemplateName = TemplateName> {
-	template: T;
-	props: TemplatePropsMap[T];
-}
+/** One scene in a multi-scene spec. */
+export type Scene = z.infer<typeof sceneSchema>;
 
-export interface MotionGraphicSpec {
-	scenes: Scene[];
-	fps?: number;
-	width?: number;
-	height?: number;
-}
+export type MotionGraphicSpec = z.infer<typeof motionGraphicSpecSchema>;
 
 export const DEFAULT_FPS = 30;
 export const DEFAULT_WIDTH = 1920;

@@ -4,19 +4,14 @@ import { fileURLToPath } from "node:url";
 import cors from "cors";
 import express from "express";
 import { nanoid } from "nanoid";
+import { motionGraphicSpecSchema } from "../src/templates/schema";
+import { TEMPLATE_NAMES } from "../src/templates/types";
 import { createJob, getJob, updateJob } from "./jobs";
-import { renderTemplate, warmUp } from "./renderer";
+import { renderSpec, warmUp } from "./renderer";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.join(__dirname, "..", "out");
 mkdirSync(OUT_DIR, { recursive: true });
-
-const TEMPLATE_NAMES = ["textReveal", "iconCallout", "chartAnimation", "beforeAfterSplit"] as const;
-type KnownTemplate = (typeof TEMPLATE_NAMES)[number];
-
-function isKnownTemplate(value: unknown): value is KnownTemplate {
-	return typeof value === "string" && (TEMPLATE_NAMES as readonly string[]).includes(value);
-}
 
 const app = express();
 app.use(cors());
@@ -27,17 +22,19 @@ app.get("/health", (_req, res) => {
 });
 
 app.post("/render", (req, res) => {
-	const { template, props } = req.body ?? {};
+	// The request body IS the spec (scenes + optional fps/width/height) — the
+	// same shape Claude will generate via the create_motion_graphic MCP tool
+	// in Phase 3, and the same shape re-submitted on an edit. There's no
+	// separate "template" field at this level any more: a single-scene spec
+	// covers what used to be a bare template+props render.
+	const parsed = motionGraphicSpecSchema.safeParse(req.body);
 
-	if (!isKnownTemplate(template)) {
-		res.status(400).json({ error: `Unknown template. Expected one of: ${TEMPLATE_NAMES.join(", ")}` });
+	if (!parsed.success) {
+		res.status(400).json({ error: "Invalid spec", issues: parsed.error.issues });
 		return;
 	}
-	if (props !== undefined && (typeof props !== "object" || props === null || Array.isArray(props))) {
-		res.status(400).json({ error: "props must be an object" });
-		return;
-	}
 
+	const spec = parsed.data;
 	const jobId = nanoid();
 	createJob(jobId);
 	res.status(202).json({ jobId });
@@ -46,7 +43,7 @@ app.post("/render", (req, res) => {
 	// instead of holding a connection open for however long a render takes.
 	const outputPath = path.join(OUT_DIR, `${jobId}.mp4`);
 	updateJob(jobId, { status: "rendering" });
-	renderTemplate(template, props ?? {}, outputPath, (progress) => {
+	renderSpec(spec, outputPath, (progress) => {
 		updateJob(jobId, { progress });
 	})
 		.then(() => {

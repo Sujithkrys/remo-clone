@@ -4,6 +4,7 @@ import { Composition } from "remotion";
 import { BEFORE_AFTER_SPLIT_DEFAULT_DURATION, BeforeAfterSplit } from "./templates/BeforeAfterSplit";
 import { CHART_ANIMATION_DEFAULT_DURATION, ChartAnimation } from "./templates/ChartAnimation";
 import { ICON_CALLOUT_DEFAULT_DURATION, IconCallout } from "./templates/IconCallout";
+import { getSpecDuration, MotionGraphic } from "./templates/MotionGraphic";
 import { TEXT_REVEAL_DEFAULT_DURATION, TextReveal } from "./templates/TextReveal";
 import {
 	DEFAULT_FPS,
@@ -12,6 +13,7 @@ import {
 	type BeforeAfterSplitProps,
 	type ChartAnimationProps,
 	type IconCalloutProps,
+	type MotionGraphicSpec,
 	type TextRevealProps,
 } from "./templates/types";
 
@@ -98,6 +100,43 @@ export const RemotionRoot: React.FC = () => {
 					textColor: "#ffffff",
 				}}
 				{...withPropsDuration(BEFORE_AFTER_SPLIT_DEFAULT_DURATION)}
+			/>
+			<Composition<AnyZodObject, MotionGraphicSpec & Record<string, unknown>>
+				id="motionGraphic"
+				component={MotionGraphic}
+				fps={DEFAULT_FPS}
+				width={DEFAULT_WIDTH}
+				height={DEFAULT_HEIGHT}
+				durationInFrames={TEXT_REVEAL_DEFAULT_DURATION + ICON_CALLOUT_DEFAULT_DURATION}
+				defaultProps={{
+					scenes: [
+						{
+							template: "textReveal",
+							props: {
+								text: "Ship faster with Reco",
+								subtext: "AI-native screen recording and editing",
+								color: "#ffffff",
+								backgroundColor: "#0A0A0F",
+							},
+						},
+						{
+							template: "iconCallout",
+							props: {
+								icon: "check",
+								text: "Export fixed",
+								subtext: "Recordings now export just like uploads",
+								color: "#FF4F2E",
+								backgroundColor: "#0A0A0F",
+							},
+						},
+					],
+				}}
+				calculateMetadata={async ({ props }) => ({
+					durationInFrames: getSpecDuration(props.scenes),
+					fps: props.fps ?? DEFAULT_FPS,
+					width: props.width ?? DEFAULT_WIDTH,
+					height: props.height ?? DEFAULT_HEIGHT,
+				})}
 			/>
 		</>
 	);

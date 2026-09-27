@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
-import type { TemplateName } from "../src/templates/types";
+import type { MotionGraphicSpec } from "../src/templates/types";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ENTRY_POINT = path.join(__dirname, "..", "src", "index.ts");
@@ -28,9 +28,8 @@ export interface RenderJobResult {
 	durationInFrames: number;
 }
 
-export async function renderTemplate(
-	template: TemplateName,
-	props: Record<string, unknown>,
+export async function renderSpec(
+	spec: MotionGraphicSpec,
 	outputPath: string,
 	onProgress: (progress: number) => void,
 ): Promise<RenderJobResult> {
@@ -38,8 +37,8 @@ export async function renderTemplate(
 
 	const composition = await selectComposition({
 		serveUrl,
-		id: template,
-		inputProps: props,
+		id: "motionGraphic",
+		inputProps: spec,
 	});
 
 	await renderMedia({
@@ -47,7 +46,7 @@ export async function renderTemplate(
 		serveUrl,
 		codec: "h264",
 		outputLocation: outputPath,
-		inputProps: props,
+		inputProps: spec,
 		onProgress: ({ progress }) => onProgress(progress),
 		// Low-memory hosts (e.g. Railway's smaller plans) report far more CPU
 		// threads than they have RAM for. libx264 auto-detects thread count
