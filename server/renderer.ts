@@ -49,6 +49,16 @@ export async function renderTemplate(
 		outputLocation: outputPath,
 		inputProps: props,
 		onProgress: ({ progress }) => onProgress(progress),
+		// Low-memory hosts (e.g. Railway's smaller plans) report far more CPU
+		// threads than they have RAM for. libx264 auto-detects thread count
+		// from the container's visible core count, and with enough threads +
+		// lookahead buffers at 1080p that's enough to get SIGKILL'd by the
+		// OOM killer mid-encode. Capping both the browser-side frame-render
+		// concurrency and ffmpeg's own thread count keeps peak memory bounded
+		// at the cost of some render speed.
+		concurrency: 2,
+		ffmpegOverride: ({ type, args }) =>
+			type === "stitcher" ? ["-threads", "2", ...args] : args,
 	});
 
 	return { outputPath, durationInFrames: composition.durationInFrames };
