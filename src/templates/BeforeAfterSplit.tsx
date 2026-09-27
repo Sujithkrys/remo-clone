@@ -71,11 +71,15 @@ function Half({
 	const translateX = interpolate(progress, [0, 1], [60 * direction, 0]);
 	const opacity = interpolate(progress, [0, 1], [0, 1]);
 	return (
-		<AbsoluteFill
+		// A plain flex-item div, not AbsoluteFill: the parent row already lays
+		// the two halves out side by side, so `flex: 1` (normal flow) is all
+		// that's needed — mixing that with an extra `left` offset (meant for
+		// absolutely-positioned elements) pushed the second half fully off
+		// the right edge of the frame instead of just sitting at 50%.
+		<div
 			style={{
-				position: "relative",
-				width: "50%",
-				left: direction === -1 ? 0 : "50%",
+				flex: 1,
+				display: "flex",
 				backgroundColor: color,
 				alignItems: "center",
 				justifyContent: "center",
@@ -95,6 +99,6 @@ function Half({
 			>
 				{label}
 			</div>
-		</AbsoluteFill>
+		</div>
 	);
 }
