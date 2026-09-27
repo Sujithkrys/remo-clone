@@ -5,3 +5,7 @@ dist
 
 # Ignore the output video from Git but not videos you import into src/.
 out
+
+# Per-request generated Remotion source files (custom-code rendering) --
+# written and deleted around each render, never meant to be committed.
+generated

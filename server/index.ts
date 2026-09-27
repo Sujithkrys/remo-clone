@@ -4,10 +4,9 @@ import { fileURLToPath } from "node:url";
 import cors from "cors";
 import express from "express";
 import { nanoid } from "nanoid";
-import { motionGraphicSpecSchema } from "../src/templates/schema";
-import { TEMPLATE_NAMES } from "../src/templates/types";
+import { validateGeneratedCode } from "./codeValidation";
+import { type CustomRenderSpec, renderCustomComposition } from "./dynamicRenderer";
 import { createJob, getJob, updateJob } from "./jobs";
-import { renderSpec, warmUp } from "./renderer";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.join(__dirname, "..", "out");
@@ -15,26 +14,43 @@ mkdirSync(OUT_DIR, { recursive: true });
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 app.get("/health", (_req, res) => {
-	res.json({ ok: true, templates: TEMPLATE_NAMES });
+	res.json({ ok: true, mode: "custom-code" });
 });
 
 app.post("/render", (req, res) => {
-	// The request body IS the spec (scenes + optional fps/width/height) — the
-	// same shape Claude will generate via the create_motion_graphic MCP tool
-	// in Phase 3, and the same shape re-submitted on an edit. There's no
-	// separate "template" field at this level any more: a single-scene spec
-	// covers what used to be a bare template+props render.
-	const parsed = motionGraphicSpecSchema.safeParse(req.body);
+	// The request body is a Claude-authored Remotion component (`code`) plus
+	// the timing/dimensions the render service controls -- there's no more
+	// fixed-template system. Claude writes real Remotion code the same way it
+	// would in a chat session with Remotion "attached"; this server's only job
+	// is to validate, bundle, and render it safely.
+	const body = req.body as Partial<CustomRenderSpec>;
 
-	if (!parsed.success) {
-		res.status(400).json({ error: "Invalid spec", issues: parsed.error.issues });
+	if (typeof body.code !== "string") {
+		res.status(400).json({ error: "Missing required field: code" });
+		return;
+	}
+	if (typeof body.durationInFrames !== "number" || body.durationInFrames <= 0) {
+		res.status(400).json({ error: "Missing or invalid required field: durationInFrames" });
 		return;
 	}
 
-	const spec = parsed.data;
+	const validation = validateGeneratedCode(body.code);
+	if (!validation.valid) {
+		res.status(400).json({ error: `Rejected code: ${validation.reason}` });
+		return;
+	}
+
+	const spec: CustomRenderSpec = {
+		code: body.code,
+		durationInFrames: body.durationInFrames,
+		fps: body.fps,
+		width: body.width,
+		height: body.height,
+	};
+
 	const jobId = nanoid();
 	createJob(jobId);
 	res.status(202).json({ jobId });
@@ -43,7 +59,7 @@ app.post("/render", (req, res) => {
 	// instead of holding a connection open for however long a render takes.
 	const outputPath = path.join(OUT_DIR, `${jobId}.mp4`);
 	updateJob(jobId, { status: "rendering" });
-	renderSpec(spec, outputPath, (progress) => {
+	renderCustomComposition(spec, outputPath, (progress) => {
 		updateJob(jobId, { progress });
 	})
 		.then(() => {
@@ -91,11 +107,3 @@ console.log("remo-clone render service booting...");
 app.listen(PORT, () => {
 	console.log(`remo-clone render service listening on port ${PORT}`);
 });
-
-warmUp()
-	.then(() => {
-		console.log("Remotion bundle warmed up");
-	})
-	.catch((error) => {
-		console.error("Failed to warm up Remotion bundle:", error);
-	});
