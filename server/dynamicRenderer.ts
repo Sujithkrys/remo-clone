@@ -86,8 +86,27 @@ export async function renderCustomComposition(
 		// this content changes every request, so it must be bundled fresh each
 		// time -- the cost Claude's own "attach Remotion" experience also pays,
 		// which is why a custom render takes noticeably longer than picking a
-		// pre-bundled template.
-		const serveUrl = await withTimeout(bundle({ entryPoint: entryPath }), 60_000, "Bundling");
+		// pre-bundled template. Railway's container has a hard 1GB memory
+		// limit; sourcemaps, minification, and persistent caching are all
+		// memory-heavy webpack steps that buy nothing for a one-off internal
+		// bundle nobody debugs from source or rebuilds twice, so they're
+		// stripped here to keep bundling from OOM-killing the process.
+		const serveUrl = await withTimeout(
+			bundle({
+				entryPoint: entryPath,
+				webpackOverride: (config) => ({
+					...config,
+					devtool: false,
+					cache: false,
+					optimization: {
+						...config.optimization,
+						minimize: false,
+					},
+				}),
+			}),
+			60_000,
+			"Bundling",
+		);
 
 		const composition = await withTimeout(
 			selectComposition({ serveUrl, id: "generated" }),
@@ -102,7 +121,11 @@ export async function renderCustomComposition(
 				codec: "h264",
 				outputLocation: outputPath,
 				onProgress: ({ progress }) => onProgress(progress),
-				concurrency: 2,
+				// Lower than the old fixed-template renderer's concurrency: 2 --
+				// bundling a fresh webpack build per request already adds memory
+				// pressure the old (bundle-once, reuse-forever) path never had, on
+				// the same 1GB-limited container that OOM'd under the old setting.
+				concurrency: 1,
 				ffmpegOverride: ({ type, args }) => {
 					if (type !== "stitcher") return args;
 					const output = args[args.length - 1];
