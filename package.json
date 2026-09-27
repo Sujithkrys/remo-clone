@@ -9,6 +9,7 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
+    "@remotion/bundler": "^4.0.529",
     "@remotion/cli": "4.0.529",
     "@remotion/google-fonts": "^4.0.529",
     "@remotion/renderer": "^4.0.529",
@@ -36,7 +37,9 @@
     "dev": "remotion studio",
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
-    "lint": "eslint src && tsc"
+    "lint": "eslint src && tsc",
+    "server": "tsx server/index.ts",
+    "server:dev": "tsx watch server/index.ts"
   },
   "sideEffects": [
     "*.css"

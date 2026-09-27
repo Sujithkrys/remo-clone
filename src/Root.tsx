@@ -1,4 +1,5 @@
 import "./index.css";
+import type { AnyZodObject } from "remotion";
 import { Composition } from "remotion";
 import { BEFORE_AFTER_SPLIT_DEFAULT_DURATION, BeforeAfterSplit } from "./templates/BeforeAfterSplit";
 import { CHART_ANIMATION_DEFAULT_DURATION, ChartAnimation } from "./templates/ChartAnimation";
@@ -30,7 +31,7 @@ const withPropsDuration = (fallback: number) => ({
 export const RemotionRoot: React.FC = () => {
 	return (
 		<>
-			<Composition<React.FC<TextRevealProps>, TextRevealProps>
+			<Composition<AnyZodObject, TextRevealProps & Record<string, unknown>>
 				id="textReveal"
 				component={TextReveal}
 				fps={DEFAULT_FPS}
@@ -45,7 +46,7 @@ export const RemotionRoot: React.FC = () => {
 				}}
 				{...withPropsDuration(TEXT_REVEAL_DEFAULT_DURATION)}
 			/>
-			<Composition<React.FC<IconCalloutProps>, IconCalloutProps>
+			<Composition<AnyZodObject, IconCalloutProps & Record<string, unknown>>
 				id="iconCallout"
 				component={IconCallout}
 				fps={DEFAULT_FPS}
@@ -61,7 +62,7 @@ export const RemotionRoot: React.FC = () => {
 				}}
 				{...withPropsDuration(ICON_CALLOUT_DEFAULT_DURATION)}
 			/>
-			<Composition<React.FC<ChartAnimationProps>, ChartAnimationProps>
+			<Composition<AnyZodObject, ChartAnimationProps & Record<string, unknown>>
 				id="chartAnimation"
 				component={ChartAnimation}
 				fps={DEFAULT_FPS}
@@ -82,7 +83,7 @@ export const RemotionRoot: React.FC = () => {
 				}}
 				{...withPropsDuration(CHART_ANIMATION_DEFAULT_DURATION)}
 			/>
-			<Composition<React.FC<BeforeAfterSplitProps>, BeforeAfterSplitProps>
+			<Composition<AnyZodObject, BeforeAfterSplitProps & Record<string, unknown>>
 				id="beforeAfterSplit"
 				component={BeforeAfterSplit}
 				fps={DEFAULT_FPS}
