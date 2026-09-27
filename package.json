@@ -1,24 +1,35 @@
 {
-  "name": "my-remotion-video",
+  "name": "remo-clone",
   "version": "1.0.0",
-  "description": "My Remotion video",
-  "repository": {},
+  "description": "Remotion-based motion graphics render service for Reco",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sujithkrys/remo-clone.git"
+  },
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
     "@remotion/cli": "4.0.529",
+    "@remotion/google-fonts": "^4.0.529",
+    "@remotion/renderer": "^4.0.529",
+    "@remotion/tailwind-v4": "4.0.529",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "nanoid": "^6.0.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "remotion": "4.0.529",
-    "@remotion/tailwind-v4": "4.0.529",
     "tailwindcss": "4.0.0"
   },
   "devDependencies": {
     "@remotion/eslint-config-flat": "4.0.529",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/react": "19.2.7",
     "@types/web": "0.0.166",
     "eslint": "9.19.0",
     "prettier": "3.8.1",
+    "tsx": "^4.23.15",
     "typescript": "5.9.3"
   },
   "scripts": {
