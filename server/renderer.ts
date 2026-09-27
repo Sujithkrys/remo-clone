@@ -57,8 +57,16 @@ export async function renderTemplate(
 		// concurrency and ffmpeg's own thread count keeps peak memory bounded
 		// at the cost of some render speed.
 		concurrency: 2,
-		ffmpegOverride: ({ type, args }) =>
-			type === "stitcher" ? ["-threads", "2", ...args] : args,
+		// `args` is ffmpeg's full flattened command; `-threads` must sit among
+		// the output options (right before the output path) to cap the
+		// encoder's own thread pool. Prepending it instead puts it before
+		// `-i`, where ffmpeg treats it as a decode-side option and libx264
+		// still auto-detects the container's full core count.
+		ffmpegOverride: ({ type, args }) => {
+			if (type !== "stitcher") return args;
+			const outputPath = args[args.length - 1];
+			return [...args.slice(0, -1), "-threads", "2", outputPath];
+		},
 	});
 
 	return { outputPath, durationInFrames: composition.durationInFrames };
