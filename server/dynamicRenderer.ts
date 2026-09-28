@@ -8,8 +8,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const GENERATED_DIR = path.join(__dirname, "..", "generated");
 
 const DEFAULT_FPS = 30;
-const DEFAULT_WIDTH = 1920;
-const DEFAULT_HEIGHT = 1080;
+// 720p rather than 1080p: full-HD roughly doubles per-frame memory (pixel
+// count, JPEG intermediate size, canvas buffers) over 720p for a container
+// capped at 1GB. Callers that explicitly need 1080p can still ask for it via
+// width/height -- this only affects requests that don't specify one.
+const DEFAULT_WIDTH = 1280;
+const DEFAULT_HEIGHT = 720;
 
 // A broken or maliciously-crafted composition (an infinite loop in a render
 // hook, for example) must not be able to hang the server indefinitely --
