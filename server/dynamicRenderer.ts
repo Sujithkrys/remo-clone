@@ -13,8 +13,11 @@ const DEFAULT_HEIGHT = 1080;
 
 // A broken or maliciously-crafted composition (an infinite loop in a render
 // hook, for example) must not be able to hang the server indefinitely --
-// this is the hard backstop on top of the static code scan.
-const RENDER_TIMEOUT_MS = 3 * 60 * 1000;
+// this is the hard backstop on top of the static code scan. Genuinely
+// sophisticated per-frame canvas drawing (particle systems, procedural
+// effects) is real CPU work multiplied across every frame, not something to
+// rush -- 10 minutes gives that room without being unbounded.
+const RENDER_TIMEOUT_MS = 10 * 60 * 1000;
 
 export interface CustomRenderSpec {
 	code: string;
