@@ -39,7 +39,11 @@ const ALLOWED_IMPORT_SOURCES = [
 	"@remotion/shapes",
 	"@remotion/animation-utils",
 	"@remotion/paths",
-	"@remotion/noise",
+	// @remotion/noise deliberately excluded: its simplex-noise dependency
+	// fails to bundle on this server (a missing simplex-noise.js.map breaks
+	// the build after code already passed validation) -- remotion's own
+	// random() covers the same "seeded pseudo-randomness" need for grain/
+	// glitch/jitter effects without this problem.
 	"@remotion/motion-blur",
 	"@remotion/layout-utils",
 	"@remotion/google-fonts",
