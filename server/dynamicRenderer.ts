@@ -129,6 +129,20 @@ export async function renderCustomComposition(
 				// pressure the old (bundle-once, reuse-forever) path never had, on
 				// the same 1GB-limited container that OOM'd under the old setting.
 				concurrency: 1,
+				// A long, full-HD, visually dense render (e.g. a 15s canvas-heavy
+				// piece) OOM-killed ffmpeg mid-encode in production: Remotion
+				// normally renders frames while ffmpeg encodes previous ones in
+				// parallel for speed, which stacks their peak memory together.
+				// Disallowing that makes it fully sequential -- render everything,
+				// then encode -- trading render time for a much lower peak, which
+				// matches what genuinely ambitious content actually needs here.
+				disallowParallelEncoding: true,
+				// Explicit JPEG (smaller intermediate frames than PNG) at a
+				// moderate quality, rather than relying on Remotion's own default,
+				// to keep the same memory-vs-quality tradeoff visible and tunable
+				// in one place if this container's limit is hit again.
+				imageFormat: "jpeg",
+				jpegQuality: 80,
 				ffmpegOverride: ({ type, args }) => {
 					if (type !== "stitcher") return args;
 					const output = args[args.length - 1];
